@@ -32,7 +32,7 @@ distanceToAnchor = 0:distanceToAnchor_interval:distanceToAnchor_max;
 
 nRepeat = 1000; % for obtaining average performance
 
-ii_max = 1; % TODO findout what this exactly is, then rename this.
+ii_max = 1000; % TODO findout what this exactly is, then rename this.
 
 allErrors_history = zeros(length(distanceToAnchor) * nRepeat, 18);
 allErrors_history_saveIndex = 0;

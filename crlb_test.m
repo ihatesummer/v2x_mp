@@ -24,3 +24,5 @@ mp
 load('aoa_crlb_data/CRLB_data_N5.mat')
 filename = 'hist_all_variance_crlb_N5.csv';
 mp
+
+fig_dist_error
