@@ -1,6 +1,16 @@
 sensorNoise = 0;
 variance_d = 1; % (D_error*100)/100
-variance_theta = (pi / 180 * 3)^2; 
+
+if crlb_loaded
+    % original .mat data range: -90deg ~ 90deg, with 0.01deg interval
+    % Assuming symmetry, extend the range to -90deg ~ 270deg
+    crlb = [crlb; crlb]; 
+    variance_theta = crlb;
+    crlb_loaded = true;
+else
+    variance_theta = (pi / 180 * 3)^2;
+end
+
 nVehicles = 10;
 nIterations = 10;
 anchor = round(nVehicles / 2);
@@ -8,6 +18,7 @@ anchor = round(nVehicles / 2);
 variation_movement_x = 0.1;
 variation_movement_y = 1;
 timeInterval = 0.1;
+
 % TODO turn below variables into array
 avgVelocity_x_all = 0;
 avgVelocity_y_vehicle1to2 = 36;
@@ -49,9 +60,21 @@ for d = distanceToAnchor
         aoa = aoa + (coorinateDifferences(:, :, 1) < 0) * pi; 
         aoa(1:1 + size(aoa, 1):end) = 0; %eliminating diagonal entries
 
-        aoa_observed = aoa + sqrt(variance_theta) * randn(size(aoa)); %theta_ijn
-        aoa_observed(1:nVehicles + 1:end) = 0;
-
+        if crlb_loaded
+            aoa_crlb_index = int32((aoa + pi / 2) ./ (2*pi) .* 3601 + 1);
+            variance_theta_crlb = zeros(size(aoa_crlb_index));
+            for idx = 1:numel(aoa_crlb_index)
+                if aoa_crlb_index(idx) ~= 0
+                    variance_theta_crlb(idx) = variance_theta(aoa_crlb_index(idx));
+                end
+            end
+            aoa_observed = aoa + sqrt(variance_theta_crlb) .* randn(size(aoa)); %theta_ijn
+            aoa_observed(1:nVehicles + 1:end) = 0;
+        else
+            aoa_observed = aoa + sqrt(variance_theta) * randn(size(aoa)); %theta_ijn
+            aoa_observed(1:nVehicles + 1:end) = 0;
+        end
+        
         currentPositions_history(:, :, 1) = currentPositions;
 
         distances_history(:, :, 1) = distances;
@@ -137,12 +160,18 @@ for d = distanceToAnchor
                     for v2 = 1:nVehicles
 
                         if v1 ~= v2 && abs(distances_observed(v1, v2)) > eps
-                            x = variance_d * cos(aoa_observed(v1, v2))^2 + ...
-                                distances_observed(v1, v2)^2 * variance_theta * ...
-                                sin(aoa_observed(v1, v2))^2;
-                            y = variance_d * sin(aoa_observed(v1, v2))^2 + ...
-                                distances_observed(v1, v2)^2 * variance_theta * ...
-                                cos(aoa_observed(v1, v2))^2;
+                            if crlb_loaded
+                                x = variance_d * cos(aoa_observed(v1, v2))^2 + ...
+                                    distances_observed(v1, v2)^2 * variance_theta_crlb(v1, v2) * sin(aoa_observed(v1, v2))^2;
+                                y = variance_d * sin(aoa_observed(v1, v2))^2 + ...
+                                    distances_observed(v1, v2)^2 * variance_theta_crlb(v1, v2) * cos(aoa_observed(v1, v2))^2;
+                            else
+                                x = variance_d * cos(aoa_observed(v1, v2))^2 + ...
+                                    distances_observed(v1, v2)^2 * variance_theta * sin(aoa_observed(v1, v2))^2;
+                                y = variance_d * sin(aoa_observed(v1, v2))^2 + ...
+                                    distances_observed(v1, v2)^2 * variance_theta * cos(aoa_observed(v1, v2))^2;
+                            end
+
                             fij2xin_variance(v1, v2, :) = xin2fij_variance(v2, :) + [x y];
 
                             sum_fij2xin_mean = sum_fij2xin_mean + squeeze(fij2xin_mean(v1, v2, :) ./ fij2xin_variance(v1, v2, :)).';
@@ -191,8 +220,20 @@ for d = distanceToAnchor
             aoa(1:1 + size(aoa, 1):end) = 0; %eliminating diagonal entries
             aoa_history(:, :, ii + 1) = aoa;
             
-            aoa_observed = aoa + sqrt(variance_theta) * randn(size(aoa)); %theta_ijn
-            aoa_observed(1:nVehicles + 1:end) = 0; %eliminating diagonal entries
+            if crlb_loaded
+                aoa_crlb_index = int32((aoa + pi / 2) ./ (2*pi) .* 3601 + 1);
+                for idx = 1:numel(aoa_crlb_index)
+                    if aoa_crlb_index(idx) ~= 0
+                        variance_theta_crlb(idx) = variance_theta(aoa_crlb_index(idx));
+                    end
+                end
+                aoa_observed = aoa + sqrt(variance_theta_crlb) .* randn(size(aoa)); %theta_ijn
+                aoa_observed(1:nVehicles + 1:end) = 0;
+            else
+                aoa_observed = aoa + sqrt(variance_theta) * randn(size(aoa)); %theta_ijn
+                aoa_observed(1:nVehicles + 1:end) = 0; %eliminating diagonal entries
+            end
+            
             aoa_observed_history(:, :, ii + 1) = aoa_observed;
             
             for j = 1:nVehicles
@@ -288,17 +329,17 @@ for d = distanceToAnchor
 end
 
 %columns of all saved .mat files: average / max / min
-hist_absError_all = allErrors_history(:, 1:3);
-hist_absError_anchor = allErrors_history(:, 4:6);
-hist_absError_agent = allErrors_history(:, 7:9);
-hist_relError_all = allErrors_history(:, 10:12);
-hist_relError_anchor = allErrors_history(:, 13:15);
-hist_relError_agent = allErrors_history(:, 16:18);
-save('hist_absError_all.mat', 'hist_absError_all')
-save('hist_absError_anchor.mat', 'hist_absError_anchor')
-save('hist_absError_agent.mat', 'hist_absError_agent')
-save('hist_relError_all.mat', 'hist_relError_all')
-save('hist_relError_anchor.mat', 'hist_relError_anchor')
-save('hist_relError_agent.mat', 'hist_relError_agent')
+% hist_absError_all = allErrors_history(:, 1:3);
+% hist_absError_anchor = allErrors_history(:, 4:6);
+% hist_absError_agent = allErrors_history(:, 7:9);
+% hist_relError_all = allErrors_history(:, 10:12);
+% hist_relError_anchor = allErrors_history(:, 13:15);
+% hist_relError_agent = allErrors_history(:, 16:18);
+% save('hist_absError_all.mat', 'hist_absError_all')
+% save('hist_absError_anchor.mat', 'hist_absError_anchor')
+% save('hist_absError_agent.mat', 'hist_absError_agent')
+% save('hist_relError_all.mat', 'hist_relError_all')
+% save('hist_relError_anchor.mat', 'hist_relError_anchor')
+% save('hist_relError_agent.mat', 'hist_relError_agent')
 
-writematrix(allErrors_history, 'hist_all.csv')
+writematrix(allErrors_history, filename);
