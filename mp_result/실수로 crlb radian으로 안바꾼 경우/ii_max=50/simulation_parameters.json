@@ -1,0 +1,14 @@
+{
+    "anchor": "round(nVehicles / 2)",
+    "distanceToAnchor_interval": 1,
+    "distanceToAnchor_max": 14,
+    "ii_max": 50,
+    "nIterations": 10,
+    "nRepeat": 1000,
+    "nVehicles": 10,
+    "sensorNoise": 0,
+    "timeInterval": 0.1,
+    "variance_d": 1,
+    "variation_movement_x": 0.1,
+    "variation_movement_y": 1
+}

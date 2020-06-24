@@ -1,0 +1,19 @@
+{
+    "column 1": "Absolute error, all vehicles, average",
+    "column 2": "Absolute error, all vehicles, maximum",
+    "column 3": "Absolute error, all vehicles, minimum",
+    "column 4": "Absolute error, anchor vehicles, average",
+    "column 5": "Absolute error, anchor vehicles, maximum",
+    "column 6": "Absolute error, anchor vehicles, minimum",
+    "column 7": "Absolute error, agent vehicles, average",
+    "column 8": "Absolute error, agent vehicles, maximum",
+    "column 9": "Absolute error, agent vehicles, minimum",
+    "column 10": "Relative error, all vehicles, average",
+    "column 12": "Relative error, all vehicles, maximum",
+    "column 13": "Relative error, all vehicles, minimum",
+    "column 14": "Relative error, anchor vehicles, average",
+    "column 15": "Relative error, anchor vehicles, maximum",
+    "column 16": "Relative error, anchor vehicles, minimum",
+    "column 17": "Relative error, agent vehicles, average",
+    "column 18": "Relative error, agent vehicles, maximum"
+}

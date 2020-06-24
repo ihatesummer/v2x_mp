@@ -1,12 +1,11 @@
 sensorNoise = 0;
-variance_d = 1; % (D_error*100)/100
+variance_d = 1;
 
 if crlb_loaded
     % original .mat data range: -90deg ~ 90deg, with 0.01deg interval
     % Assuming symmetry, extend the range to -90deg ~ 270deg
     crlb = [crlb; crlb]; 
-    variance_theta = crlb;
-    crlb_loaded = true;
+    variance_theta = (pi ./ 180 .* crlb) .^ 2;
 else
     variance_theta = (pi / 180 * 3)^2;
 end
@@ -28,21 +27,21 @@ avgVelocity_y_anchor = 36;
 
 distanceToAnchor_max = 14;
 distanceToAnchor_interval = 1;
-distanceToAnchor = 0:distanceToAnchor_interval:distanceToAnchor_max;
+distancesToAnchor = 0:distanceToAnchor_interval:distanceToAnchor_max;
 
 nRepeat = 1000; % for obtaining average performance
 
-ii_max = 1000; % TODO findout what this exactly is, then rename this.
+ii_max = 50; % TODO findout what this exactly is, then rename this.
 
-allErrors_history = zeros(length(distanceToAnchor) * nRepeat, 18);
+allErrors_history = zeros(length(distancesToAnchor) * nRepeat, 18);
 allErrors_history_saveIndex = 0;
 
-for d = distanceToAnchor
+for distanceToAnchor = distancesToAnchor
     for r = 1:nRepeat
         allErrors_history_saveIndex = allErrors_history_saveIndex + 1;
         
         currentPositions_y = zeros(10, 1);
-        currentPositions_y(anchor) = d;
+        currentPositions_y(anchor) = distanceToAnchor;
         currentPositions_y = currentPositions_y + randn(nVehicles, 1);
         currentPositions_x = [1 1 2 2 3 3 4 4 5 5]' * 3.5; %3.5: width of the lanes, in meter
         currentPositions = [currentPositions_x currentPositions_y];
@@ -328,18 +327,9 @@ for d = distanceToAnchor
     end
 end
 
-%columns of all saved .mat files: average / max / min
-% hist_absError_all = allErrors_history(:, 1:3);
-% hist_absError_anchor = allErrors_history(:, 4:6);
-% hist_absError_agent = allErrors_history(:, 7:9);
-% hist_relError_all = allErrors_history(:, 10:12);
-% hist_relError_anchor = allErrors_history(:, 13:15);
-% hist_relError_agent = allErrors_history(:, 16:18);
-% save('hist_absError_all.mat', 'hist_absError_all')
-% save('hist_absError_anchor.mat', 'hist_absError_anchor')
-% save('hist_absError_agent.mat', 'hist_absError_agent')
-% save('hist_relError_all.mat', 'hist_relError_all')
-% save('hist_relError_anchor.mat', 'hist_relError_anchor')
-% save('hist_relError_agent.mat', 'hist_relError_agent')
-
 writematrix(allErrors_history, filename);
+
+simulParamNames = {'anchor', 'currentPositions_x', 'distanceToAnchor_interval', 'distanceToAnchor_max', 'ii_max', 'nIterations', 'nVehicles', 'sensorNoise', 'timeInterval', 'variance_d', 'variation_movement_x', 'variation_movement_y'};
+simulParamValues = {anchor, currentPositions_x, distanceToAnchor_interval, distanceToAnchor_max, ii_max, nIterations, nVehicles, sensorNoise, timeInterval, variance_d, variation_movement_x, variation_movement_y};
+simulParams = {simulParamNames{:}; simulParamValues{:}};
+writecell(simulParams, strcat(saveLocation, 'simulation parameters.csv'));

@@ -1,28 +1,35 @@
-% runtime of mp.m: about 160.674544 seconds
-% runtime of this script: 160.674544 seconds * 7 = about 18.7454 minutes
+saveLocation = 'mp_result/2020.06.24/';
 
+crlbFiles = {...
+    'CRLB_data_N41.mat', ...
+    'CRLB_data_N21.mat', ...
+    'CRLB_data_N11.mat', ...
+    'CRLB_data_N9.mat', ...
+    'CRLB_data_N7.mat', ...
+    'CRLB_data_N5.mat', ...
+    };
+savefileNames = {...
+    'hist_all_variance_crlb_N41.csv', ...
+    'hist_all_variance_crlb_N21.csv', ...
+    'hist_all_variance_crlb_N11.csv', ...
+    'hist_all_variance_crlb_N9.csv', ...
+    'hist_all_variance_crlb_N7.csv', ...
+    'hist_all_variance_crlb_N5.csv' ...
+    };
+
+%%
 crlb_loaded = false;
 filename = 'hist_all_variance_fixed.csv';
-mp
+mp;
 
+%%
 crlb_loaded = true;
-load('aoa_crlb_data/CRLB_data_N41.mat')
-filename = 'hist_all_variance_crlb_N41.csv';
-mp
-load('aoa_crlb_data/CRLB_data_N21.mat')
-filename = 'hist_all_variance_crlb_N21.csv';
-mp
-load('aoa_crlb_data/CRLB_data_N11.mat')
-filename = 'hist_all_variance_crlb_N11.csv';
-mp
-load('aoa_crlb_data/CRLB_data_N9.mat')
-filename = 'hist_all_variance_crlb_N9.csv';
-mp
-load('aoa_crlb_data/CRLB_data_N7.mat')
-filename = 'hist_all_variance_crlb_N7.csv';
-mp
-load('aoa_crlb_data/CRLB_data_N5.mat')
-filename = 'hist_all_variance_crlb_N5.csv';
-mp
+cd aoa_crlb_data;
+for i = 1:length(crlbFiles)
+    load(crlbFiles{i});
+    filename = savefileNames{i};
+    mp;
+end
+cd ..;
 
-fig_dist_error
+fig_dist_error;
