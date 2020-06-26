@@ -1,4 +1,5 @@
-saveLocation = 'mp_result/2020.06.24/';
+clear;
+saveLocation = 'mp_result/aoa-horizontalZero/';
 
 crlbFiles = {...
     'CRLB_data_N41.mat', ...
@@ -19,17 +20,18 @@ savefileNames = {...
 
 %%
 crlb_loaded = false;
-filename = 'hist_all_variance_fixed.csv';
+saveFilename = 'hist_all_variance_fixed.csv';
 mp;
 
 %%
 crlb_loaded = true;
-cd aoa_crlb_data;
+
 for i = 1:length(crlbFiles)
+    cd aoa_crlb_data;
     load(crlbFiles{i});
-    filename = savefileNames{i};
+    saveFilename = savefileNames{i};
+    cd ..;
     mp;
 end
-cd ..;
 
 fig_dist_error;

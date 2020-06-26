@@ -22,32 +22,38 @@ files = {...
 abs = figure;
 
 for i = 1:length(files)
+    cd(saveLocation);
     data = load(files{i});
+    cd ../..;
+    
     data_preprocess;
     plot(distancesToAnchor, data_processed(:, index_absError_all_avg), '-o', 'LineWidth', 1.5);
     hold on;
 end
 
-legend(labels, 'Location', 'southeast');
+legend(labels, 'Location', 'southeastoutside');
 xlabel('y-axis distance to anchor [m]', 'FontSize', 10);
 ylabel('Absolute error [m]', 'FontSize', 10);
 grid on
 
-saveas(abs, 'abs')
+saveas(abs, strcat(saveLocation,'abs'));
 
 %%
 rel = figure;
 
 for i = 1:length(files)
+    cd(saveLocation);
     data = load(files{i});
+    cd ../..;
+    
     data_preprocess;
     plot(distancesToAnchor, data_processed(:, index_relError_all_avg), '-o', 'LineWidth', 1.5);
     hold on;
 end
 
-legend(labels, 'Location', 'southeast');
+legend(labels, 'Location', 'southeastoutside');
 xlabel('y-axis distance to anchor [m]', 'FontSize', 10);
 ylabel('Relative error [m]', 'FontSize', 10);
 grid on
 
-saveas(rel, 'rel')
+saveas(rel, strcat(saveLocation,'rel'));

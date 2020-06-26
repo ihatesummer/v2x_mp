@@ -4,6 +4,8 @@ variance_d = 1;
 if crlb_loaded
     % original .mat data range: -90deg ~ 90deg, with 0.01deg interval
     % Assuming symmetry, extend the range to -90deg ~ 270deg
+    
+%     crlb = circshift(crlb,900); % To assume given 0 degree is w.r.t y-axis
     crlb = [crlb; crlb]; 
     variance_theta = (pi ./ 180 .* crlb) .^ 2;
 else
@@ -327,7 +329,7 @@ for distanceToAnchor = distancesToAnchor
     end
 end
 
-writematrix(allErrors_history, filename);
+writematrix(allErrors_history, strcat(saveLocation, saveFilename));
 
 simulParamNames = {'anchor', 'currentPositions_x', 'distanceToAnchor_interval', 'distanceToAnchor_max', 'ii_max', 'nIterations', 'nVehicles', 'sensorNoise', 'timeInterval', 'variance_d', 'variation_movement_x', 'variation_movement_y'};
 simulParamValues = {anchor, currentPositions_x, distanceToAnchor_interval, distanceToAnchor_max, ii_max, nIterations, nVehicles, sensorNoise, timeInterval, variance_d, variation_movement_x, variation_movement_y};
