@@ -1,2 +1,0 @@
-anchor,currentPositions_x,,,,,,,,,,distanceToAnchor_interval,distanceToAnchor_max,ii_max,nIterations,nVehicles,sensorNoise,timeInterval,variance_d,variation_movement_x,variation_movement_y
-5,3.5,3.5,7,7,10.5,10.5,14,14,17.5,17.5,1,14,50,10,10,0,0.1,1,0.1,1

@@ -1,18 +1,7 @@
-sensorNoise = 0;
-variance_d = 1;
-
-if crlb_loaded
-    % original .mat data range: -90deg ~ 90deg, with 0.01deg interval
-    % Assuming symmetry, extend the range to -90deg ~ 270deg
-    
-%     crlb = circshift(crlb,900); % To assume given 0 degree is w.r.t y-axis
-    crlb = [crlb; crlb]; 
-    variance_theta = (pi ./ 180 .* crlb) .^ 2;
-else
-    variance_theta = (pi / 180 * 3)^2;
-end
-
-nVehicles = 10;
+sensorNoise = 0; % TODO find unit
+variance_d = 1; % meters
+xAxisInterval = 7; % meters. Lane width = 3.5m
+nVehicles = 5;
 nIterations = 10;
 anchor = round(nVehicles / 2);
 
@@ -20,20 +9,31 @@ variation_movement_x = 0.1;
 variation_movement_y = 1;
 timeInterval = 0.1;
 
-% TODO turn below variables into array
-avgVelocity_x_all = 0;
-avgVelocity_y_vehicle1to2 = 36;
-avgVelocity_y_vehicle4to5 = 36;
-avgVelocity_y_vehicle3 = 36;
-avgVelocity_y_anchor = 36;
+avgVelocity_x = ones(nVehicles,1) * 0;
+avgVelocity_y = ones(nVehicles,1) * 36; % 36 m/s = 129.6 km/h
+avgVelocity_y(anchor) = 36;
 
 distanceToAnchor_max = 14;
 distanceToAnchor_interval = 1;
 distancesToAnchor = 0:distanceToAnchor_interval:distanceToAnchor_max;
 
 nRepeat = 1000; % for obtaining average performance
-
 ii_max = 50; % TODO findout what this exactly is, then rename this.
+
+currentPositions_y_init = zeros(nVehicles, 1);
+% currentPositions_x_init = [1 1 2 2 3 3 4 4 5 5]' * xAxisInterval;
+currentPositions_x_init = (1:5)' * xAxisInterval;
+
+if crlb_loaded
+    % original .mat data range: -90deg ~ 90deg, with 0.01deg interval
+    % Assuming symmetry, extend the range to -90deg ~ 270deg
+    
+    crlb = circshift(crlb,900); % To assume given 0 degree is w.r.t y-axis
+    crlb = [crlb; crlb]; 
+    variance_theta = (pi ./ 180 .* crlb) .^ 2;
+else
+    variance_theta = (pi / 180 * 3)^2;
+end
 
 allErrors_history = zeros(length(distancesToAnchor) * nRepeat, 18);
 allErrors_history_saveIndex = 0;
@@ -42,10 +42,10 @@ for distanceToAnchor = distancesToAnchor
     for r = 1:nRepeat
         allErrors_history_saveIndex = allErrors_history_saveIndex + 1;
         
-        currentPositions_y = zeros(10, 1);
-        currentPositions_y(anchor) = distanceToAnchor;
-        currentPositions_y = currentPositions_y + randn(nVehicles, 1);
-        currentPositions_x = [1 1 2 2 3 3 4 4 5 5]' * 3.5; %3.5: width of the lanes, in meter
+        currentPositions_x = currentPositions_x_init;        
+        currentPositions_y_init(anchor) = distanceToAnchor;
+        currentPositions_y = currentPositions_y_init + randn(nVehicles, 1);
+
         currentPositions = [currentPositions_x currentPositions_y];
 
         distances = squareform(pdist(currentPositions));
@@ -120,26 +120,8 @@ for distanceToAnchor = distancesToAnchor
             ii = ii + 1;
 
             % factor to variable messge update (f_i --> x_{i,n})
-            fi2xin_mean = zeros(nVehicles, 2);
             
-            for j = 1:nVehicles
-
-                if j == anchor
-                    fi2xin_mean(anchor, :) = beliefMean(anchor, :) + [avgVelocity_x_all avgVelocity_y_anchor] * timeInterval;
-                else
-
-                    if currentPositions(j, 1) < 8.5
-                        fi2xin_mean(j, :) = beliefMean(j, :) + [avgVelocity_x_all avgVelocity_y_vehicle1to2] * timeInterval;
-                    elseif currentPositions(j, 1) >= 8.5 && currentPositions(j, 1) < 13
-                        fi2xin_mean(j, :) = beliefMean(j, :) + [avgVelocity_x_all avgVelocity_y_vehicle3] * timeInterval;
-                    else
-                        fi2xin_mean(j, :) = beliefMean(j, :) + [avgVelocity_x_all avgVelocity_y_vehicle4to5] * timeInterval;
-                    end
-
-                end
-
-            end
-
+            fi2xin_mean = beliefMean + [avgVelocity_x avgVelocity_y] * timeInterval;
             fi2xin_variance = beliefVariance + repmat([variation_movement_x variation_movement_y], [size(beliefVariance, 1) 1]);
 
             intbelmean1 = fi2xin_mean;
@@ -237,27 +219,7 @@ for distanceToAnchor = distancesToAnchor
             
             aoa_observed_history(:, :, ii + 1) = aoa_observed;
             
-            for j = 1:nVehicles
-
-                if j == anchor
-                    currentPositions(anchor, :) = currentPositions(anchor, :) + ...
-                        [avgVelocity_x_all avgVelocity_y_anchor] * timeInterval;
-                else
-
-                    if currentPositions(j, 1) < 8.5
-                        currentPositions(j, :) = currentPositions(j, :) + ...
-                            [avgVelocity_x_all avgVelocity_y_vehicle1to2] * timeInterval;
-                    elseif currentPositions(j, 1) >= 8.5 && currentPositions(j, 1) < 13
-                        currentPositions(j, :) = currentPositions(j, :) + ...
-                            [avgVelocity_x_all avgVelocity_y_vehicle3] * timeInterval;
-                    else
-                        currentPositions(j, :) = currentPositions(j, :) + ...
-                            [avgVelocity_x_all avgVelocity_y_vehicle4to5] * timeInterval;
-                    end
-
-                end
-
-            end
+            currentPositions = currentPositions + [avgVelocity_x avgVelocity_y] * timeInterval;
             
             %relative error
             x = repmat(beliefMean_history(:, 1, ii + 1), [1 nVehicles]) - repmat(beliefMean_history(:, 1, ii + 1).', [nVehicles 1]);
@@ -331,7 +293,7 @@ end
 
 writematrix(allErrors_history, strcat(saveLocation, saveFilename));
 
-simulParamNames = {'anchor', 'currentPositions_x', 'distanceToAnchor_interval', 'distanceToAnchor_max', 'ii_max', 'nIterations', 'nVehicles', 'sensorNoise', 'timeInterval', 'variance_d', 'variation_movement_x', 'variation_movement_y'};
-simulParamValues = {anchor, currentPositions_x, distanceToAnchor_interval, distanceToAnchor_max, ii_max, nIterations, nVehicles, sensorNoise, timeInterval, variance_d, variation_movement_x, variation_movement_y};
+simulParamNames = {'anchor', 'currentPositions_x', 'distanceToAnchor_interval', 'distanceToAnchor_max', 'ii_max', 'nIterations', 'nVehicles', 'nRepeat', 'sensorNoise', 'timeInterval', 'variance_d', 'variation_movement_x', 'variation_movement_y'};
+simulParamValues = {anchor, currentPositions_x, distanceToAnchor_interval, distanceToAnchor_max, ii_max, nIterations, nVehicles, nRepeat, sensorNoise, timeInterval, variance_d, variation_movement_x, variation_movement_y};
 simulParams = {simulParamNames{:}; simulParamValues{:}};
 writecell(simulParams, strcat(saveLocation, 'simulation parameters.csv'));
