@@ -1,6 +1,9 @@
 clear;
-saveLocation = 'mp_result/lane7m-5vehicles-verticalZero/';
+timeStamp = datestr(now, 'yyyy-mm-dd, HHMMSS');
+mkdir('mp_result/',timeStamp);
+saveLocation = strcat('mp_result/',timeStamp,'/');
 
+%%
 crlbFiles = {...
     'CRLB_data_N41.mat', ...
     'CRLB_data_N21.mat', ...
@@ -19,13 +22,13 @@ savefileNames = {...
     };
 
 %%
-crlb_loaded = false;
+b_vary_noise_by_AOA = false;
 saveFilename = 'hist_all_variance_fixed.csv';
+tic;
 mp;
-
+toc;
 %%
-crlb_loaded = true;
-
+b_vary_noise_by_AOA = true;
 for i = 1:length(crlbFiles)
     cd aoa_crlb_data;
     load(crlbFiles{i});
